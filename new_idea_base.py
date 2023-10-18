@@ -160,6 +160,8 @@ class new_idea_vae(nn.Module):
         output = self.norm_layer2(output)
         output = self.leaky_relu(output)
 
+        output = self.classifier(output)
+
         return output
 
 
@@ -177,7 +179,7 @@ def label_making(task):
 
     return torch.tensor(label_list, dtype=torch.long)
 
-
+permute_mode = None
 train_batch_size = 128
 valid_batch_size = 16
 lr = 1e-3
@@ -190,21 +192,17 @@ temperature = 1
 use_wandb = False
 use_scheduler = True
 scheduler_name = 'LROn'
-early_stopping = EarlyStopping(patience=50, verbose=True, path='best_classifier_model.pt')  # 초기화
+early_stopping = EarlyStopping(patience=50, verbose=True, path='best_base_classifier_model.pt')  # 초기화
 #lr_lambda = 0.97
 
 new_model = new_idea_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to('cuda')         #Cross_vae_Linear_origin_b64_lr1e-3_4.pt이게 뭔지 확인!
-new_model.load_state_dict(torch.load('result/number1.pt'))
-for param in new_model.parameters():
-    param.requires_grad = False
-new_model.classifier = nn.Linear(128, 400).to('cuda')
 #train_dataset_name = 'data/train_data.json'
 #valid_dataset_name = 'data/valid_data.json'
 train_dataset_name = 'data/train_new_idea.json'
 valid_dataset_name = 'data/valid_new_idea.json'
 # train_dataset_name = 'data/train_new_idea_task_sample2_.json'
 # valid_dataset_name = 'data/valid_new_idea_task_sample2_.json'
-train_dataset = ARCDataset(train_dataset_name, mode=mode)
+train_dataset = ARCDataset(train_dataset_name, mode=mode, permute_mode=permute_mode)
 valid_dataset = ARC_ValidDataset(valid_dataset_name, mode=mode)
 kind_of_dataset = 'Concept_task_sample2' if 'concept' in train_dataset_name else 'ARC_task_sample2' if 'sample2' in train_dataset_name else 'ARC'
 train_loader = DataLoader(train_dataset, batch_size=train_batch_size, drop_last=True, shuffle=True)
@@ -291,7 +289,6 @@ for epoch in tqdm(range(epochs)):
         task = task.to(torch.long).to('cuda') # TODO 고치기
 
         output = new_model(input, output)
-        output = new_model.classifier(output)
 
         loss = criteria(output, task)
 
@@ -348,5 +345,5 @@ for epoch in tqdm(range(epochs)):
     # if use_scheduler:
     #     scheduler.step(avg_valid_loss)
 
-new_model.load_state_dict(torch.load('best_classifier_model.pt'))
-torch.save(new_model.state_dict(), f'result/classifier_number_{best_acc:.2f}.pt')
+new_model.load_state_dict(torch.load('best_base_classifier_model.pt'))
+torch.save(new_model.state_dict(), f'result/base_classifier_number_{best_acc:.2f}.pt')

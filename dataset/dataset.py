@@ -58,6 +58,12 @@ class ARCDataset(Dataset):
             x_size = self.dataset['input_size'][idx]
             y_size = self.dataset['output_size'][idx]
 
+            if self.permute_mode:
+                self.permute_color = np.random.choice(11, 11, replace=False)
+                for i in range(30):
+                    for j in range(30):
+                        x[i][j] = self.permute_color[x[i][j]]
+
             # Apply augmentations if augment flag is True
             if self.augment:
                 x_numpy = x.numpy()  # Tensor를 Numpy 배열로 변환
