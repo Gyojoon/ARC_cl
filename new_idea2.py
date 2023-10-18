@@ -174,7 +174,7 @@ def label_making(task):
 
     return torch.tensor(label_list, dtype=torch.long)
 
-
+permute_mode = None
 train_batch_size = 128
 valid_batch_size = 16
 lr = 1e-4
@@ -199,7 +199,7 @@ train_dataset_name = 'data/train_new_idea.json'
 valid_dataset_name = 'data/valid_new_idea.json'
 # train_dataset_name = 'data/train_new_idea_task_sample2_.json'
 # valid_dataset_name = 'data/valid_new_idea_task_sample2_.json'
-train_dataset = ARCDataset(train_dataset_name, mode=mode)
+train_dataset = ARCDataset(train_dataset_name, mode=mode, permute_mode=permute_mode)
 valid_dataset = ARC_ValidDataset(valid_dataset_name, mode=mode)
 kind_of_dataset = 'Concept_task_sample2' if 'concept' in train_dataset_name else 'ARC_task_sample2' if 'sample2' in train_dataset_name else 'ARC'
 train_loader = DataLoader(train_dataset, batch_size=train_batch_size, drop_last=True, shuffle=True)
