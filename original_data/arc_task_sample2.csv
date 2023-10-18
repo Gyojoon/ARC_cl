@@ -1,0 +1,51 @@
+Name,class,tag
+007bbfb7,"Copy, Object, Resize",0
+00d62c1b,"Boundary, Color, Fill, Inside",1
+017c7c7b,"Color, Copy, Object, Resize",2
+025d127b,"Move, Position",3
+045e512c,"Color, Copy, Direction, Object, Pattern",4
+0520fde7,"Bitwise, Color, Resize",5
+5269061,"Fill, Pattern",6
+05f2a901,"Direction, Move, Object",7
+06df4c85,"Boundary, Color, Connect, Direction",8
+08ed6ac7,"Color, Count, Fill, Order",9
+09629e4f,"Count, Object, Pattern, Resize",10
+0962bcdd,"Color, Fill, Pattern",11
+0a938d79,"Connect, Direction, Fill, Pattern",12
+0b148d64,"Color, Count, Object, Resize",13
+0ca9ddb6,"Color, Fill, Pattern",14
+0d3d703e,"Color, Pattern",15
+0dfd9992,"Fill, Inside, Pattern",16
+0e206a2e,"Direction, Move, Object",17
+10fcaaa3,"Fill, Pattern, Resize",18
+11852cab,"Fill, Pattern",19
+1190e5a7,"Boundary, Color, Count",20
+137eaa0f,"Combine, Object, Resize",21
+150deff5,"Color, Fill, Object",22
+178fcbfb,"Color, Connect, Direction",23
+1a07d186,"Color, Direction, Move",24
+1b2d62fb,"Bitwise, Color, Resize",25
+1b60fb0c,"Color, Fill, Pattern",26
+1bfc4729,"Color, Fill, Pattern",27
+1c786137,"Boundary, Crop, Resize",28
+1caeab9d,"Color, Move, Order",29
+1cf80156,"Crop, Object, Resize",30
+1e0a9b12,"Direction, Move",31
+1e32b0e9,"Boundary, Color, Fill, Object",32
+1f0c79e5,"Color, Direction, Object, Pattern",33
+1f642eb9,"Color, Fill, Position",34
+1f85a75f,"Crop, Object, Resize",30
+1f876c06,"Color, Connect, Inside, Outside, Pattern",35
+1fad071e,"Color, Count, Object, Resize",36
+2013d3e2,"Crop, Pattern, Resize",37
+2204b7a8,"Boundary, Color, Fill, Position",38
+22168020,"Color, Fill, Object",39
+22233c11,"Color, Fill, Inside, Object, Outside, Pattern",40
+2281f1f4,"Color, Fill, Position",41
+228f6490,"Inside, Move, Object",42
+22eb0ac0,"Color, Connect, Direction",43
+234bbc79,"Color, Combine, Fill, Move, Object, Resize",44
+23581191,"Color, Connect, Direction, Fill",45
+239be575,"Color, Object, Resize",46
+23b5c85d,"Crop, Object, Resize",47
+253bf280,"Color, Connect, Direction",48

@@ -1,0 +1,12 @@
+*.json
+/data
+/.idea
+/config
+/result
+/wandb
+/tensorboard_logs
+/tester
+/trainer
+/utils
+*.pt
+*.png
