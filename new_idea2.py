@@ -298,8 +298,8 @@ for epoch in tqdm(range(epochs)):
         
         optimizer.zero_grad()
         train_total_loss.append(loss)
-    # print(f'train loss: {sum(train_total_loss) / len(train_total_loss)}')
-    print("train loss: {0}, lr: {1:.6f}".format(sum(train_total_loss) / len(train_total_loss), optimizer.param_groups[0]['lr']))
+    print(f'train loss: {sum(train_total_loss) / len(train_total_loss)}')
+    # print("train loss: {0}, lr: {1:.6f}".format(sum(train_total_loss) / len(train_total_loss), optimizer.param_groups[0]['lr']))
     # if use_scheduler:    
     #     scheduler.step()
     
