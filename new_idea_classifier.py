@@ -178,9 +178,9 @@ def label_making(task):
 permute_mode = None
 train_batch_size = 128
 valid_batch_size = 16
-lr = 1e-3
+lr = 1e-2
 batch_size = train_batch_size
-epochs = 1000
+epochs = 400
 seed = 777
 model_name = 'vae'
 mode = 'task'
@@ -330,9 +330,9 @@ for epoch in tqdm(range(epochs)):
 
     # early_stopping(avg_valid_loss, new_model)
     early_stopping(-100 * acc/len(valid_dataset), new_model)
-    if early_stopping.early_stop:
-        print("Early stopping")
-        break
+    # if early_stopping.early_stop:
+    #     print("Early stopping")
+    #     break
 
     print(f'valid loss: {avg_valid_loss}')
     print(f'valid accuracy: {100 * acc/len(valid_dataset):.2f}% ({acc}/{len(valid_dataset)})')

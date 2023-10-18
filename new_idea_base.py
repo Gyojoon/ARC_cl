@@ -192,7 +192,7 @@ temperature = 1
 use_wandb = False
 use_scheduler = True
 scheduler_name = 'LROn'
-early_stopping = EarlyStopping(patience=50, verbose=True, path='best_base_classifier_model.pt')  # 초기화
+early_stopping = EarlyStopping(patience=200, verbose=True, path='best_base_classifier_model.pt')  # 초기화
 #lr_lambda = 0.97
 
 new_model = new_idea_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to('cuda')         #Cross_vae_Linear_origin_b64_lr1e-3_4.pt이게 뭔지 확인!
@@ -314,7 +314,7 @@ for epoch in tqdm(range(epochs)):
         task = task.to(torch.long).to('cuda')  # Moved the task tensor to the GPU as well
 
         output = new_model(input, output)
-        output = new_model.classifier(output)
+        # output = new_model.classifier(output)
 
         loss = criteria(output, task)
 

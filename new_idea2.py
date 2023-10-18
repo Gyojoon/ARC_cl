@@ -174,7 +174,7 @@ def label_making(task):
 
     return torch.tensor(label_list, dtype=torch.long)
 
-permute_mode = None
+permute_mode = True
 train_batch_size = 128
 valid_batch_size = 16
 lr = 1e-4
