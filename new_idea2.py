@@ -209,8 +209,8 @@ valid_loader = DataLoader(valid_dataset, batch_size=valid_batch_size, drop_last=
 optimizer = Lion(new_model.parameters(), lr=lr, weight_decay=1e-2)
 #optimizer = optim.Adam(new_model.parameters(), lr=lr, weight_decay=5e-4)
 #scheduler = optim.lr_scheduler.LambdaLR(optimizer=optimizer, lr_lambda=lambda epoch: lr_lambda ** epoch)
-#scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.5, verbose=True)
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5, verbose=True)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.5, verbose=True)
+#scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5, verbose=True)
 
 seed_fix(seed)
 
@@ -298,10 +298,10 @@ for epoch in tqdm(range(epochs)):
         
         optimizer.zero_grad()
         train_total_loss.append(loss)
-    print(f'train loss: {sum(train_total_loss) / len(train_total_loss)}')
-    #print("train loss: {0}, lr: {1:.6f}".format(sum(train_total_loss) / len(train_total_loss), optimizer.param_groups[0]['lr']))
-    if use_scheduler:
-        scheduler.step()
+    # print(f'train loss: {sum(train_total_loss) / len(train_total_loss)}')
+    print("train loss: {0}, lr: {1:.6f}".format(sum(train_total_loss) / len(train_total_loss), optimizer.param_groups[0]['lr']))
+    # if use_scheduler:    
+    #     scheduler.step()
     
     if use_wandb:
         wandb.log({
@@ -339,8 +339,8 @@ for epoch in tqdm(range(epochs)):
             "valid_loss": avg_valid_loss,
         }, step=epoch)
 
-    # if use_scheduler:
-    #     scheduler.step(avg_valid_loss)
+    if use_scheduler:
+        scheduler.step(avg_valid_loss)
 
 # new_model.load_state_dict(torch.load('best_model.pt'))
 # torch.save(new_model.state_dict(), f'result/number1.pt')
