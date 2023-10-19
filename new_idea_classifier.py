@@ -180,7 +180,7 @@ train_batch_size = 128
 valid_batch_size = 16
 lr = 1e-2
 batch_size = train_batch_size
-epochs = 400
+epochs = 200
 seed = 777
 model_name = 'vae'
 mode = 'task'
@@ -188,7 +188,7 @@ temperature = 1
 use_wandb = False
 use_scheduler = True
 scheduler_name = 'LROn'
-early_stopping = EarlyStopping(patience=50, verbose=True, path='best_classifier_model.pt')  # 초기화
+early_stopping = EarlyStopping(patience=40, verbose=True, path='best_classifier_model.pt')  # 초기화
 #lr_lambda = 0.97
 
 new_model = new_idea_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to('cuda')         #Cross_vae_Linear_origin_b64_lr1e-3_4.pt이게 뭔지 확인!
@@ -330,9 +330,9 @@ for epoch in tqdm(range(epochs)):
 
     # early_stopping(avg_valid_loss, new_model)
     early_stopping(-100 * acc/len(valid_dataset), new_model)
-    # if early_stopping.early_stop:
-    #     print("Early stopping")
-    #     break
+    if early_stopping.early_stop:
+        print("Early stopping")
+        break
 
     print(f'valid loss: {avg_valid_loss}')
     print(f'valid accuracy: {100 * acc/len(valid_dataset):.2f}% ({acc}/{len(valid_dataset)})')
