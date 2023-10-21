@@ -281,7 +281,7 @@ early_stopping = EarlyStopping(patience=100, verbose=True, path='best_model.pt')
 #lr_lambda = 0.97
 
 new_model = new_idea_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to('cuda')         #Cross_vae_Linear_origin_b64_lr1e-3_4.pt이게 뭔지 확인!
-#train_dataset_name = 'data/train_data.json'
+#train_dataset_name = 'data/train_data.json'[
 #valid_dataset_name = 'data/valid_data.json'
 train_dataset_name = 'data/train_new_idea.json'
 valid_dataset_name = 'data/valid_new_idea.json'
@@ -348,7 +348,7 @@ print(f'KNN Accuracy: {accuracy * 100:.2f}%')
 
 # sampler = SkoptSampler()
 sampler = TPESampler(**TPESampler.hyperopt_parameters())
-study = optuna.create_study(direction='miniimize', sampler=sampler)
+study = optuna.create_study(direction='minimize', sampler=sampler)
 study.optimize(objective, n_trials=100)
 
 # new_model.load_state_dict(torch.load('best_model.pt'))
