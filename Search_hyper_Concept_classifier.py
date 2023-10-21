@@ -283,6 +283,8 @@ def objective(trial):
                 'valid accuracy': 100 * acc/len(valid_dataset),
                 'best_valid': best_acc
             }, step=epoch)
+
+        wandb.finish()
     
     return best_acc
 

@@ -262,7 +262,7 @@ def objective(trial):
     
     wandb.finish()
     
-    return best_acc
+    return avg_valid_loss
 
 entity = 'whatchang'
 train_batch_size = 128
@@ -348,7 +348,7 @@ print(f'KNN Accuracy: {accuracy * 100:.2f}%')
 
 # sampler = SkoptSampler()
 sampler = TPESampler(**TPESampler.hyperopt_parameters())
-study = optuna.create_study(direction='maximize', sampler=sampler)
+study = optuna.create_study(direction='miniimize', sampler=sampler)
 study.optimize(objective, n_trials=100)
 
 # new_model.load_state_dict(torch.load('best_model.pt'))

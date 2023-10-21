@@ -177,13 +177,13 @@ def label_making(task):
 permute_mode = True
 train_batch_size = 128
 valid_batch_size = 16
-lr = 1e-4
+lr = 0.00005996092633338626
 batch_size = train_batch_size
-epochs = 1000
+epochs = 200
 seed = 777
 model_name = 'vae'
 mode = 'task'
-temperature = 1
+temperature = 1.2883353744737405
 # temperature = 0.1
 use_wandb = False
 use_scheduler = True
