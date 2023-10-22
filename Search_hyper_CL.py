@@ -186,6 +186,17 @@ def nt_xent_loss(output, temperature):
     loss = nn.CrossEntropyLoss()(logits, labels)
     return loss
 
+def soft_cl_loss(output, labels, temperature):
+    batch_size = output.shape[0]  
+    logits = torch.mm(output, output.t().contiguous()) / temperature
+    # topk_indices = torch.topk(logits, target_n, dim=1).indices.to(output.device)
+    # label_mask = torch.zeros(batch_size, batch_size).to(output.device)
+    # for i, topk in enumerate(topk_indices):
+    #     label_mask[i][topk] = 1 / target_n
+    # label = torch.arange(batch_size).to(output.device)
+    loss = nn.functional.cross_entropy(logits, labels)
+    return loss
+
 def objective(trial):
     new_model = new_idea_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to('cuda') 
     best_acc = 0
@@ -264,6 +275,7 @@ def objective(trial):
     
     return avg_valid_loss
 
+permute_mode = True
 entity = 'whatchang'
 train_batch_size = 128
 valid_batch_size = 16
@@ -287,7 +299,7 @@ train_dataset_name = 'data/train_new_idea.json'
 valid_dataset_name = 'data/valid_new_idea.json'
 # train_dataset_name = 'data/train_new_idea_task_sample2_.json'
 # valid_dataset_name = 'data/valid_new_idea_task_sample2_.json'
-train_dataset = ARCDataset(train_dataset_name, mode=mode)
+train_dataset = ARCDataset(train_dataset_name, mode=mode, permute_mode=permute_mode)
 valid_dataset = ARCDataset(valid_dataset_name, mode=mode)
 kind_of_dataset = 'Concept_task_sample2' if 'concept' in train_dataset_name else 'ARC_task_sample2' if 'sample2' in train_dataset_name else 'ARC'
 train_loader = DataLoader(train_dataset, batch_size=train_batch_size, drop_last=True, shuffle=True)
@@ -349,7 +361,7 @@ print(f'KNN Accuracy: {accuracy * 100:.2f}%')
 # sampler = SkoptSampler()
 sampler = TPESampler(**TPESampler.hyperopt_parameters())
 study = optuna.create_study(direction='minimize', sampler=sampler)
-study.optimize(objective, n_trials=100)
+study.optimize(objective, n_trials=1000)
 
 # new_model.load_state_dict(torch.load('best_model.pt'))
 # torch.save(new_model.state_dict(), f'result/number1.pt')

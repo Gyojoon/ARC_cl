@@ -68,7 +68,7 @@ for concept in tqdm(train_files):
         a = pattern.search(concept)
         data_class = concept[a.regs[0][0]:a.regs[0][1]].strip('\\').split('.')[0][:-1] if '10' not in concept[a.regs[0][0]:a.regs[0][1]].strip('\\').split('.')[0] else concept[a.regs[0][0]:a.regs[0][1]].strip('\\').split('.')[0][:-2]
         train_auto_class.append(data_class)
-        train_auto_class.append(data_class)
+        # train_auto_class.append(data_class)
 
     for i in range(len(valid_data)):
         valid_data[i]['input'] = (np.array(valid_data[i]['input'])).tolist()
@@ -97,7 +97,7 @@ for concept in tqdm(train_files):
 
         a = pattern.search(concept)
         data_class = concept[a.regs[0][0]:a.regs[0][1]].strip('\\').split('.')[0][:-1] if '10' not in concept[a.regs[0][0]:a.regs[0][1]].strip('\\').split('.')[0] else concept[a.regs[0][0]:a.regs[0][1]].strip('\\').split('.')[0][:-2]
-        train_auto_class.append(data_class)
+        # train_auto_class.append(data_class)
         train_auto_class.append(data_class)
 
 for concept in tqdm(test_files):
@@ -132,7 +132,7 @@ for concept in tqdm(test_files):
 
         a = pattern.search(concept)
         data_class = concept[a.regs[0][0]:a.regs[0][1]].strip('\\').split('.')[0][:-1] if '10' not in concept[a.regs[0][0]:a.regs[0][1]].strip('\\').split('.')[0] else concept[a.regs[0][0]:a.regs[0][1]].strip('\\').split('.')[0][:-2]
-        test_auto_class.append(data_class)
+        # test_auto_class.append(data_class)
         test_auto_class.append(data_class)
 
     for i in range(len(valid_data)):
@@ -162,7 +162,7 @@ for concept in tqdm(test_files):
 
         a = pattern.search(concept)
         data_class = concept[a.regs[0][0]:a.regs[0][1]].strip('\\').split('.')[0][:-1] if '10' not in concept[a.regs[0][0]:a.regs[0][1]].strip('\\').split('.')[0] else concept[a.regs[0][0]:a.regs[0][1]].strip('\\').split('.')[0][:-2]
-        test_auto_class.append(data_class)
+        # test_auto_class.append(data_class)
         test_auto_class.append(data_class)
 
 

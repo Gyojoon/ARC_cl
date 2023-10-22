@@ -158,7 +158,7 @@ class new_idea_vae(nn.Module):
         output = self.norm_layer2(output)
         output = self.leaky_relu(output)
 
-        return output
+        return fusion_feature
 
 
 def label_making(task):
@@ -176,10 +176,10 @@ def label_making(task):
     return torch.tensor(label_list, dtype=torch.long)
 
 entity = 'whatchang'
-permute_mode = True
+permute_mode = None
 train_batch_size = 128
 valid_batch_size = 16
-lr = 1e-2
+lr = 7e-3
 batch_size = train_batch_size
 epochs = 200
 seed = 777
@@ -193,8 +193,8 @@ early_stopping = EarlyStopping(patience=40, verbose=True, path='best_concept_cla
 #lr_lambda = 0.97
 
 new_model = new_idea_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to('cuda')         #Cross_vae_Linear_origin_b64_lr1e-3_4.pt이게 뭔지 확인!
-#train_dataset_name = 'data/train_data.json'
-#valid_dataset_name = 'data/valid_data.json'
+# train_dataset_name = 'data/train_new_idea.json'
+# valid_dataset_name = 'data/valid_new_idea.json'
 train_dataset_name = 'data/train_concept.json'
 valid_dataset_name = 'data/test_concept.json'
 # train_dataset_name = 'data/train_new_idea_task_sample2_.json'
@@ -206,11 +206,9 @@ train_loader = DataLoader(train_dataset, batch_size=train_batch_size, drop_last=
 valid_loader = DataLoader(valid_dataset, batch_size=valid_batch_size, drop_last=True, shuffle=False)
 
 #optimizer = optim.AdamW(new_model.parameters(), lr=lr)
-optimizer = Lion(new_model.parameters(), lr=lr, weight_decay=1e-2)
 #optimizer = optim.Adam(new_model.parameters(), lr=lr, weight_decay=5e-4)
 #scheduler = optim.lr_scheduler.LambdaLR(optimizer=optimizer, lr_lambda=lambda epoch: lr_lambda ** epoch)
 #scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.5, verbose=True)
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5, verbose=True)
 criteria = nn.CrossEntropyLoss()
 
 best_acc = 0
@@ -259,10 +257,15 @@ valid_labels = np.array(valid_labels)
 accuracy = knn_model.score(valid_embeddings, valid_labels)
 print(f'Before KNN Accuracy: {accuracy * 100:.2f}%')
 
-new_model.load_state_dict(torch.load('result/number1_inf.pt'))
+
+new_model = new_idea_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to('cuda') 
+new_model.load_state_dict(torch.load('result\CL_soft_cl_0.2418329417705536.pt'))
 for param in new_model.parameters():
     param.requires_grad = False
 new_model.classifier = nn.Linear(128, 16).to('cuda')
+optimizer = Lion(new_model.parameters(), lr=lr, weight_decay=1e-2)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5, verbose=True)
+
 
 if use_wandb:
     set_wandb('new_idea', 'train', seed, 'Lion', kind_of_dataset, entity)
@@ -373,11 +376,11 @@ for epoch in tqdm(range(epochs)):
 
     avg_valid_loss = sum(valid_total_loss) / len(valid_total_loss)
 
-    # early_stopping(avg_valid_loss, new_model)
-    # early_stopping(-100 * acc/len(valid_dataset), new_model)
-    # if early_stopping.early_stop:
-    #     print("Early stopping")
-    #     break
+    early_stopping(avg_valid_loss, new_model)
+    early_stopping(-100 * acc/len(valid_dataset), new_model)
+    if early_stopping.early_stop:
+        print("Early stopping")
+        break
 
     print(f'valid loss: {avg_valid_loss}')
     print(f'valid accuracy: {100 * acc/len(valid_dataset):.2f}% ({acc}/{len(valid_dataset)})')

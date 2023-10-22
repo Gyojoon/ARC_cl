@@ -255,11 +255,12 @@ model_name = 'vae'
 mode = 'task'
 
 model = new_idea_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to('cuda')         #Cross_vae_Linear_origin_b64_lr1e-3_4.pt이게 뭔지 확인!
-model.load_state_dict(torch.load('best_model.pt'))
-#train_dataset_name = 'data/train_data.json'
-#valid_dataset_name = 'data/valid_data.json'
-train_dataset_name = 'data/train_new_idea.json'
-valid_dataset_name = 'data/valid_new_idea.json'
+model.classifier = nn.Linear(128,16)
+model.load_state_dict(torch.load('result/concept_classifier_number_25.70.pt'))
+train_dataset_name = 'data/train_concept.json'
+valid_dataset_name = 'data/test_concept.json'
+# train_dataset_name = 'data/train_new_idea.json'
+# valid_dataset_name = 'data/valid_new_idea.json'
 # train_dataset_name = 'data/train_new_idea_task_sample2_.json'
 # valid_dataset_name = 'data/valid_new_idea_task_sample2_.json'
 train_dataset = ARCDataset(train_dataset_name, mode=mode)
@@ -299,9 +300,9 @@ colors4 = plt.cm.magma(np.linspace(0, 1, 36))  # Added a smaller segment from th
 colors_total = np.vstack((colors1, colors2, colors3, colors4))
 mymap = mpl.colors.LinearSegmentedColormap.from_list('my_colormap', colors_total)
 
-sns.scatterplot(x=tsne_embedded[:,0], y=tsne_embedded[:,1], hue=target_list, legend='full', palette=mymap, s = 2)
+sns.scatterplot(x=tsne_embedded[:,0], y=tsne_embedded[:,1], hue=target_list, legend='full', palette=mymap, s = 15)
 plt.savefig('number1_tsne2D.png')
-sns.scatterplot(x=pca_embedded[:,0], y=pca_embedded[:,1], hue=target_list, legend='full', palette=mymap, s = 2)
+sns.scatterplot(x=pca_embedded[:,0], y=pca_embedded[:,1], hue=target_list, legend='full', palette=mymap, s = 15)
 plt.savefig('number1_pca2D.png')
 
 

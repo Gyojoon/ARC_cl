@@ -131,7 +131,7 @@ class new_idea_vae(nn.Module):
         self.norm_layer1 = nn.BatchNorm1d(self.first_layer_parameter_size)
         self.norm_layer2 = nn.BatchNorm1d(self.last_parameter_size)
 
-        self.classifier = nn.Linear(self.last_parameter_size, 400)
+        self.classifier = nn.Linear(self.last_parameter_size, 16)
 
     def auto_encoder_freeze(self):
         for param in self.autoencoder.parameters():
@@ -150,17 +150,18 @@ class new_idea_vae(nn.Module):
 
         # Using difference of the latent vectors
         diff_feature = input_feature - output_feature
+        # diff_feature =  output_feature - input_feature
         concat_feature = diff_feature.reshape(batch_size, -1)
 
         fusion_feature = self.fusion_layer1(concat_feature)
         fusion_feature = self.norm_layer1(fusion_feature)
         fusion_feature = self.leaky_relu(fusion_feature) 
 
-        output = self.fusion_layer2(fusion_feature)
-        output = self.norm_layer2(output)
-        output = self.leaky_relu(output)
+        # output = self.fusion_layer2(fusion_feature)
+        # output = self.norm_layer2(output)
+        # output = self.leaky_relu(output)
 
-        output = self.classifier(output)
+        output = self.classifier(fusion_feature)
 
         return output
 
@@ -222,57 +223,6 @@ seed_fix(seed)
 if use_wandb:
     set_wandb('new_idea', 'train', seed, 'Lion', kind_of_dataset)
 
-
-def nt_xent_loss(output, temperature):
-    batch_size = output.shape[0]
-    logits = torch.mm(output, output.t().contiguous()) / temperature
-    labels = torch.arange(batch_size).to(output.device)
-    loss = nn.CrossEntropyLoss()(logits, labels)
-    return loss
-
-# KNN 모델 초기화
-knn_model = KNeighborsClassifier(n_neighbors=5)
-
-train_embeddings = []  # 학습 데이터의 임베딩을 저장하기 위한 리스트
-train_labels = []      # 학습 데이터의 레이블을 저장하기 위한 리스트
-
-new_model.eval()
-for input, output, x_size, y_size, task in train_loader:
-    input = input.to(torch.float32).to('cuda')
-    output = output.to(torch.float32).to('cuda')
-    task = task.to(torch.long)
-    
-    with torch.no_grad():
-        embeddings = new_model(input, output)
-    train_embeddings.append(embeddings.cpu().numpy())
-    train_labels.extend(task.numpy())
-
-# 임베딩과 레이블의 형태를 조절합니다.
-train_embeddings = np.vstack(train_embeddings)
-train_labels = np.array(train_labels)
-
-# KNN 모델 학습
-knn_model.fit(train_embeddings, train_labels)
-
-valid_embeddings = []  # 검증 데이터의 임베딩을 저장하기 위한 리스트
-valid_labels = []      # 검증 데이터의 레이블을 저장하기 위한 리스트
-for input, output, x_size, y_size, task in valid_loader:
-    input = input.to(torch.float32).to('cuda')
-    output = output.to(torch.float32).to('cuda')
-    task = task.to(torch.long)
-    
-    with torch.no_grad():
-        embeddings = new_model(input, output)
-    valid_embeddings.append(embeddings.cpu().numpy())
-    valid_labels.extend(task.numpy())
-
-# 임베딩과 레이블의 형태를 조절합니다.
-valid_embeddings = np.vstack(valid_embeddings)
-valid_labels = np.array(valid_labels)
-
-# KNN의 정확도를 계산합니다.
-accuracy = knn_model.score(valid_embeddings, valid_labels)
-print(f'KNN Accuracy: {accuracy * 100:.2f}%')
 
 for epoch in tqdm(range(epochs)):
     train_total_loss = []

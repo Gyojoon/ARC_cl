@@ -174,19 +174,32 @@ def label_making(task):
 
     return torch.tensor(label_list, dtype=torch.long)
 
-permute_mode = True
+def soft_cl_loss(output, labels, temperature):
+    batch_size = output.shape[0]  
+    logits = torch.mm(output, output.t().contiguous()) / temperature
+    # topk_indices = torch.topk(logits, target_n, dim=1).indices.to(output.device)
+    # label_mask = torch.zeros(batch_size, batch_size).to(output.device)
+    # for i, topk in enumerate(topk_indices):
+    #     label_mask[i][topk] = 1 / target_n
+    # label = torch.arange(batch_size).to(output.device)
+    loss = nn.functional.cross_entropy(logits, labels)
+    return loss
+
+loss_mode = 'soft_cl'
+target_n = 10
+permute_mode = None
 train_batch_size = 128
 valid_batch_size = 16
-lr = 0.00005996092633338626
+lr = 1e-4
 batch_size = train_batch_size
 epochs = 200
 seed = 777
 model_name = 'vae'
 mode = 'task'
-temperature = 1.2883353744737405
+temperature = 1
 # temperature = 0.1
 use_wandb = False
-use_scheduler = True
+use_scheduler = False
 scheduler_name = 'LROn'
 # early_stopping = EarlyStopping(patience=20, verbose=True, path='best_model.pt')  # 초기화
 early_stopping = EarlyStopping(patience=50, verbose=True, path='best_model.pt')  # 초기화
@@ -291,7 +304,10 @@ for epoch in tqdm(range(epochs)):
         # labels = torch.tensor(np.arange(batch_size)).to('cuda')
         labels = label_making(task).to('cuda')
         #loss = nn.functional.nll_loss(nn.functional.log_softmax(logits_pred,dim=1), labels.to(torch.long))
-        loss = nt_xent_loss(output, temperature)        #NT-Xent Loss 사용
+        if loss_mode == 'nx_xent_loss':
+            loss = nt_xent_loss(output, temperature)        #NT-Xent Loss 사용
+        elif loss_mode == 'soft_cl':
+            loss = soft_cl_loss(output, labels, temperature) 
 
         loss.backward()
         optimizer.step()
@@ -300,8 +316,8 @@ for epoch in tqdm(range(epochs)):
         train_total_loss.append(loss)
     print(f'train loss: {sum(train_total_loss) / len(train_total_loss)}')
     # print("train loss: {0}, lr: {1:.6f}".format(sum(train_total_loss) / len(train_total_loss), optimizer.param_groups[0]['lr']))
-    # if use_scheduler:    
-    #     scheduler.step()
+    if use_scheduler:    
+        scheduler.step()
     
     if use_wandb:
         wandb.log({
@@ -316,21 +332,24 @@ for epoch in tqdm(range(epochs)):
         task = task.to(torch.long)
 
         output = new_model(input, output)
-        output_norm = output / output.norm(dim = -1).unsqueeze(1)
-        logits_pred = torch.matmul(output_norm, output_norm.T) * torch.exp(torch.tensor(temperature))
+        # output_norm = output / output.norm(dim = -1).unsqueeze(1)
+        # logits_pred = torch.matmul(output_norm, output_norm.T) * torch.exp(torch.tensor(temperature))
 
         labels = label_making(task).to('cuda')
         #loss = nn.functional.nll_loss(nn.functional.log_softmax(logits_pred, dim=1), labels.to(torch.long))
-        loss = nt_xent_loss(output, temperature)        #NT-Xent Loss 사용
+        if loss_mode == 'nx_xent_loss':
+            loss = nt_xent_loss(output, temperature)        #NT-Xent Loss 사용
+        elif loss_mode == 'soft_cl':
+            loss = soft_cl_loss(output, labels, temperature) 
 
         valid_total_loss.append(loss)
 
     avg_valid_loss = sum(valid_total_loss) / len(valid_total_loss)
 
-    # early_stopping(avg_valid_loss, new_model)
-    # if early_stopping.early_stop:
-    #     print("Early stopping")
-    #     break
+    early_stopping(avg_valid_loss, new_model)
+    if early_stopping.early_stop:
+        print("Early stopping")
+        break
 
     print(f'valid loss: {avg_valid_loss}')
 
@@ -342,8 +361,8 @@ for epoch in tqdm(range(epochs)):
     if use_scheduler:
         scheduler.step(avg_valid_loss)
 
-# new_model.load_state_dict(torch.load('best_model.pt'))
-torch.save(new_model.state_dict(), f'result/CL_{avg_valid_loss}.pt')
+new_model.load_state_dict(torch.load('best_model.pt'))
+torch.save(new_model.state_dict(), f'result/CL_{loss_mode}_{avg_valid_loss}.pt')
 print(avg_valid_loss)
 
 # torch.save(new_model.state_dict(), f'result/number1.pt')
