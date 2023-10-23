@@ -35,6 +35,7 @@ use_wandb = config['use_wandb']
 use_scheduler = config['use_scheduler']
 scheduler_name = config['scheduler_name']
 patience = config['patience']
+loss_mode = config['loss_mode']
 
 def objective(trial):
     new_model = new_idea_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to('cuda') 
@@ -70,7 +71,12 @@ def objective(trial):
 
             output = new_model(input, output)
 
-            loss = nt_xent_loss(output, temperature)
+            labels = label_making(task).to('cuda')
+
+            if loss_mode == 'nx_xent_loss':
+                loss = nt_xent_loss(output, temperature)        #NT-Xent Loss 사용
+            elif loss_mode == 'our_loss':
+                loss = our_loss(output, labels, temperature) 
 
             loss.backward()
             optimizer.step()
@@ -96,7 +102,12 @@ def objective(trial):
 
             output = new_model(input, output)
 
-            loss = nt_xent_loss(output, temperature)
+            labels = label_making(task).to('cuda')
+
+            if loss_mode == 'nx_xent_loss':
+                loss = nt_xent_loss(output, temperature)        #NT-Xent Loss 사용
+            elif loss_mode == 'our_loss':
+                loss = our_loss(output, labels, temperature) 
 
             valid_total_loss.append(loss) # To store the loss value and not the tensor
 

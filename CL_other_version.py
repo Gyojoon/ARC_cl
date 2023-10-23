@@ -33,6 +33,7 @@ use_wandb = config['use_wandb']
 use_scheduler = config['use_scheduler']
 scheduler_name = config['scheduler_name']
 patience = config['patience']
+loss_mode = config['loss_mode']
 early_stopping = EarlyStopping(patience=patience, verbose=True, path='best_model.pt')  # 초기화
 #lr_lambda = 0.97
 seed_fix(seed)
