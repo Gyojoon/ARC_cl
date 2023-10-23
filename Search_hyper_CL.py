@@ -17,14 +17,14 @@ from loss import *
 from utils import *
 from model import *
 
-with open('Search_hyper_CL.yaml', 'r') as f:
-    config = yaml.loac(f, Loader=yaml.FullLoader)
+with open('hyper/Search_hyper_CL.yaml', 'r') as f:
+    config = yaml.load(f, Loader=yaml.FullLoader)
 
 entity = config['entity']
 permute_mode = config['permute_mode']
 train_batch_size = config['train_batch_size']
 valid_batch_size = config['valid_batch_size']
-lr = config['lr']
+lr = float(config['lr'])
 batch_size = train_batch_size
 epochs = config['epochs']
 seed = config['seed']
