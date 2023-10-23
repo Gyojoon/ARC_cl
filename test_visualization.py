@@ -256,7 +256,7 @@ mode = 'task'
 
 model = new_idea_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to('cuda')         #Cross_vae_Linear_origin_b64_lr1e-3_4.pt이게 뭔지 확인!
 model.classifier = nn.Linear(128,16)
-model.load_state_dict(torch.load('result/concept_classifier_number_25.70.pt'))
+model.load_state_dict(torch.load('result\concept_classifier_number_27.93.pt'))
 train_dataset_name = 'data/train_concept.json'
 valid_dataset_name = 'data/test_concept.json'
 # train_dataset_name = 'data/train_new_idea.json'

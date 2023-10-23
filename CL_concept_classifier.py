@@ -110,7 +110,7 @@ print(f'Before KNN Accuracy: {accuracy * 100:.2f}%')
 new_model.load_state_dict(torch.load(f'{pre_trained}'))
 for param in new_model.parameters():
     param.requires_grad = False
-new_model.classifier = nn.Linear(128, 400).to('cuda')
+new_model.classifier = nn.Linear(128, 16).to('cuda')
 optimizer = Lion(new_model.parameters(), lr=lr, weight_decay=1e-2)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5, verbose=True)
 
