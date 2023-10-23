@@ -47,20 +47,20 @@ def seed_fix(seed):
     cudnn.deterministic = True
     random.seed(seed)
 
-def set_wandb(epochs, mode, seed, optimizer, train_batch_size, valid_batch_size, lr, temperature, dataset='ARC', entity='gyojoongu'):
-    run = wandb.init(project=f'KSC_CL_Train', entity=entity)
-    if mode == 'train':
-        config = {
-            'optimizer': optimizer,
-            'learning_rate': lr,
-            'temperature': temperature,
-            'epochs': epochs,
-            'train_batch_size': train_batch_size,
-            'valid_batch_size': valid_batch_size,
-            'seed': seed,
-        }
-        wandb.config.update(config)
-        wandb.run.name = f'o{optimizer}_l{lr}_b{train_batch_size}_e{epochs}_s{seed}'
+def set_wandb(epochs, mode, seed, optimizer, train_batch_size, valid_batch_size, lr, temperature, dataset='ARC', entity='gyojoongu', project_name=f'KSC_CL_Train'):
+    run = wandb.init(project=project_name, entity=entity)
+
+    config = {
+        'optimizer': optimizer,
+        'learning_rate': lr,
+        'temperature': temperature,
+        'epochs': epochs,
+        'train_batch_size': train_batch_size,
+        'valid_batch_size': valid_batch_size,
+        'seed': seed,
+    }
+    wandb.config.update(config)
+    wandb.run.name = f'{mode}_o{optimizer}_l{lr}_b{train_batch_size}_e{epochs}_s{seed}'
     wandb.run.save()
     return run
 

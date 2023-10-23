@@ -12,14 +12,14 @@ from loss import *
 from utils import *
 from model import *
 
-with open('base_concept_classifier.yaml', 'r') as f:
-    config = yaml.loac(f, Loader=yaml.FullLoader)
+with open('hyper/base_concept_classifier.yaml', 'r') as f:
+    config = yaml.load(f, Loader=yaml.FullLoader)
 
 entity = config['entity']
 permute_mode = config['permute_mode']
 train_batch_size = config['train_batch_size']
 valid_batch_size = config['valid_batch_size']
-lr = config['lr']
+lr = float(config['lr'])
 batch_size = train_batch_size
 epochs = config['epochs']
 seed = config['seed']
@@ -35,6 +35,7 @@ seed_fix(seed)
 #lr_lambda = 0.97
 
 new_model = new_idea_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to('cuda')         #Cross_vae_Linear_origin_b64_lr1e-3_4.pt이게 뭔지 확인!
+new_model.classifier = nn.Linear(128, 16).to('cuda')   
 #train_dataset_name = 'data/train_data.json'
 #valid_dataset_name = 'data/valid_data.json'
 train_dataset_name = 'data/train_concept.json'
@@ -58,7 +59,7 @@ criteria = nn.CrossEntropyLoss()
 best_acc = 0
 
 if use_wandb:
-    set_wandb(epochs, 'train', seed, 'Lion', train_batch_size, valid_batch_size, lr, temperature, kind_of_dataset, entity)
+    set_wandb(epochs, mode, seed, 'Lion', train_batch_size, valid_batch_size, lr, temperature, kind_of_dataset, entity, project_name='CL_classifier')
 
 
 for epoch in tqdm(range(epochs)):
@@ -68,6 +69,7 @@ for epoch in tqdm(range(epochs)):
     valid_total_acc = 0
     train_count = 0
     valid_count = 0
+    acc = 0
     new_model.train()
     for input, output, x_size, y_size, task in train_loader:
         train_count += train_batch_size
@@ -76,6 +78,10 @@ for epoch in tqdm(range(epochs)):
         task = task.to(torch.long).to('cuda') # TODO 고치기
 
         output = new_model(input, output)
+        output = new_model.classifier(output)
+
+        output_soft = nn.functional.softmax(output, dim=1) # Specified dimension for softmax
+        output_argmax = torch.argmax(output_soft, dim=1)   # Specified dimension for argmax
 
         loss = criteria(output, task)
 
@@ -90,6 +96,7 @@ for epoch in tqdm(range(epochs)):
     if use_wandb:
         wandb.log({
             "train_loss": sum(train_total_loss) / len(train_total_loss),
+            'train accuracy': 100 * acc/len(train_dataset),
         }, step=epoch)
 
     acc = 0
@@ -101,7 +108,7 @@ for epoch in tqdm(range(epochs)):
         task = task.to(torch.long).to('cuda')  # Moved the task tensor to the GPU as well
 
         output = new_model(input, output)
-        # output = new_model.classifier(output)
+        output = new_model.classifier(output)
 
         loss = criteria(output, task)
 
@@ -127,6 +134,8 @@ for epoch in tqdm(range(epochs)):
     if use_wandb:
         wandb.log({
             "valid_loss": avg_valid_loss,
+            'valid accuracy': 100 * acc/len(valid_dataset),
+            'best_valid': best_acc
         }, step=epoch)
 
     # if use_scheduler:

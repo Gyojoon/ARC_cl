@@ -18,6 +18,7 @@ from model import *
 with open('hyper/CL_concept_classifier.yaml', 'r') as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
 
+mode = config['mode']
 entity = config['entity']
 permute_mode = config['permute_mode']
 train_batch_size = config['train_batch_size']
@@ -33,6 +34,7 @@ use_wandb = config['use_wandb']
 use_scheduler = config['use_scheduler']
 scheduler_name = config['scheduler_name']
 patience = config['patience']
+pre_trained = config['pre_trained']
 seed_fix(seed)
 early_stopping = EarlyStopping(patience=40, verbose=True, path='best_concept_classifier_model.pt')  # 초기화
 #lr_lambda = 0.97
@@ -55,6 +57,9 @@ valid_loader = DataLoader(valid_dataset, batch_size=valid_batch_size, drop_last=
 #scheduler = optim.lr_scheduler.LambdaLR(optimizer=optimizer, lr_lambda=lambda epoch: lr_lambda ** epoch)
 #scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.5, verbose=True)
 criteria = nn.CrossEntropyLoss()
+
+if use_wandb:
+    set_wandb(epochs, mode, seed, 'Lion', train_batch_size, valid_batch_size, lr, temperature, kind_of_dataset, entity, project_name='CL_classifier')
 
 best_acc = 0
 
@@ -102,24 +107,12 @@ accuracy = knn_model.score(valid_embeddings, valid_labels)
 print(f'Before KNN Accuracy: {accuracy * 100:.2f}%')
 
 
-new_model.load_state_dict(torch.load('result\CL_soft_cl_0.2418329417705536.pt'))
+new_model.load_state_dict(torch.load(f'{pre_trained}'))
 for param in new_model.parameters():
     param.requires_grad = False
-new_model.classifier = nn.Linear(128, 16).to('cuda')
+new_model.classifier = nn.Linear(128, 400).to('cuda')
 optimizer = Lion(new_model.parameters(), lr=lr, weight_decay=1e-2)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5, verbose=True)
-
-
-if use_wandb:
-    set_wandb('new_idea', 'train', seed, 'Lion', kind_of_dataset, entity)
-
-
-def nt_xent_loss(output, temperature):
-    batch_size = output.shape[0]
-    logits = torch.mm(output, output.t().contiguous()) / temperature
-    labels = torch.arange(batch_size).to(output.device)
-    loss = nn.CrossEntropyLoss()(logits, labels)
-    return loss
 
 # KNN 모델 초기화
 knn_model = KNeighborsClassifier(n_neighbors=5)
@@ -172,6 +165,7 @@ for epoch in tqdm(range(epochs)):
     valid_total_acc = 0
     train_count = 0
     valid_count = 0
+    acc = 0
     new_model.train()
     for input, output, x_size, y_size, task in train_loader:
         train_count += train_batch_size
@@ -181,6 +175,11 @@ for epoch in tqdm(range(epochs)):
 
         output = new_model(input, output)
         output = new_model.classifier(output)
+
+        output_soft = nn.functional.softmax(output, dim=1) # Specified dimension for softmax
+        output_argmax = torch.argmax(output_soft, dim=1)   # Specified dimension for argmax
+
+        acc += output_argmax.eq(task).sum()
 
         loss = criteria(output, task)
 
@@ -196,6 +195,7 @@ for epoch in tqdm(range(epochs)):
     if use_wandb:
         wandb.log({
             "train_loss": sum(train_total_loss) / len(train_total_loss),
+            'train accuracy': 100 * acc/len(train_dataset),
         }, step=epoch)
 
     acc = 0
@@ -219,7 +219,6 @@ for epoch in tqdm(range(epochs)):
 
     avg_valid_loss = sum(valid_total_loss) / len(valid_total_loss)
 
-    early_stopping(avg_valid_loss, new_model)
     early_stopping(-100 * acc/len(valid_dataset), new_model)
     if early_stopping.early_stop:
         print("Early stopping")
@@ -233,6 +232,8 @@ for epoch in tqdm(range(epochs)):
     if use_wandb:
         wandb.log({
             "valid_loss": avg_valid_loss,
+            'valid accuracy': 100 * acc/len(valid_dataset),
+            'best_valid': best_acc
         }, step=epoch)
 
     # if use_scheduler:

@@ -12,7 +12,7 @@ class ARCDataset(Dataset):
         self.mode = mode
         self.permute_mode = permute_mode
         self.augment = augment
-        # self.task_dict = {'SameDifferent': 0, 'Copy': 1, 'MoveToBoundary': 2, 'ExtendToBoundary': 3, 'AboveBelow': 4, 'TopBottom3D': 5, 'CleanUp': 6, 'Order': 7, 'HorizontalVertical': 8, 'TopBottom2D': 9, 'CompleteShape': 10, 'FilledNotFilled': 11, 'ExtractObjects': 12, 'Center': 13, 'Count': 14, 'InsideOutside': 15}
+        self.task_dict = None
         # self.task_dict의 값을 고정시키는게 좋아 보일듯 -> 항상 key에 해당하는 정수 값들이 항상 바뀜
         self.transforms = transforms.Compose([
             transforms.RandomHorizontalFlip(),
@@ -26,10 +26,12 @@ class ARCDataset(Dataset):
             self.dataset = json.load(f)
 
         # Create a task dictionary to map tasks to unique integers
-        if "task" in self.dataset:
-            self.task_dict = {task: idx for idx, task in enumerate(set(self.dataset['task']))}
+        if "concept" in file_name:
+            with open('Concept_ARC_task_dict.json','r') as f:
+                self.task_dict = json.load(f)
         else:
-            self.task_dict = {}
+            with open('ARC_task_dict.json','r') as f:
+                self.task_dict = json.load(f)
 
     def __len__(self):
         if self.mode == 'Auto_encoder':
@@ -101,10 +103,12 @@ class ARC_ValidDataset(Dataset):
             self.dataset = json.load(f)
 
         # Create a task dictionary to map tasks to unique integers
-        if "task" in self.dataset:
-            self.task_dict = {task: idx for idx, task in enumerate(set(self.dataset['task']))}
+        if "concept" in file_name:
+            with open('Concept_ARC_task_dict.json','r') as f:
+                self.task_dict = json.load(f)
         else:
-            self.task_dict = {}
+            with open('ARC_task_dict.json','r') as f:
+                self.task_dict = json.load(f)
 
     def __len__(self):
         if self.mode == 'Auto_encoder':

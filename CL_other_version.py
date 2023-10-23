@@ -34,7 +34,7 @@ use_scheduler = config['use_scheduler']
 scheduler_name = config['scheduler_name']
 patience = config['patience']
 loss_mode = config['loss_mode']
-early_stopping = EarlyStopping(patience=patience, verbose=True, path='best_model.pt')  # 초기화
+early_stopping = EarlyStopping(patience=patience, verbose=True, path=f'CL_{loss_mode}_best_model.pt')  # 초기화
 #lr_lambda = 0.97
 seed_fix(seed)
 
@@ -184,8 +184,8 @@ for epoch in tqdm(range(epochs)):
     if use_scheduler:
         scheduler.step(avg_valid_loss)
 
-new_model.load_state_dict(torch.load('best_model.pt'))
+new_model.load_state_dict(torch.load(f'CL_{loss_mode}_best_model.pt'))
 torch.save(new_model.state_dict(), f'result/CL_{loss_mode}_{avg_valid_loss}.pt')
-print(avg_valid_loss)
+print(f'{loss_mode}: {avg_valid_loss}')
 
 # torch.save(new_model.state_dict(), f'result/number1.pt')
