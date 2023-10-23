@@ -12,7 +12,8 @@ class ARCDataset(Dataset):
         self.mode = mode
         self.permute_mode = permute_mode
         self.augment = augment
-        
+        # self.task_dict = {'SameDifferent': 0, 'Copy': 1, 'MoveToBoundary': 2, 'ExtendToBoundary': 3, 'AboveBelow': 4, 'TopBottom3D': 5, 'CleanUp': 6, 'Order': 7, 'HorizontalVertical': 8, 'TopBottom2D': 9, 'CompleteShape': 10, 'FilledNotFilled': 11, 'ExtractObjects': 12, 'Center': 13, 'Count': 14, 'InsideOutside': 15}
+        # self.task_dict의 값을 고정시키는게 좋아 보일듯 -> 항상 key에 해당하는 정수 값들이 항상 바뀜
         self.transforms = transforms.Compose([
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
@@ -90,7 +91,8 @@ class ARC_ValidDataset(Dataset):
         self.mode = mode
         self.permute_mode = permute_mode
         self.augment = augment
-        
+        # self.task_dict = {'SameDifferent': 0, 'Copy': 1, 'MoveToBoundary': 2, 'ExtendToBoundary': 3, 'AboveBelow': 4, 'TopBottom3D': 5, 'CleanUp': 6, 'Order': 7, 'HorizontalVertical': 8, 'TopBottom2D': 9, 'CompleteShape': 10, 'FilledNotFilled': 11, 'ExtractObjects': 12, 'Center': 13, 'Count': 14, 'InsideOutside': 15}
+        # self.task_dict의 값을 고정시키는게 좋아 보일듯 -> 항상 key에 해당하는 정수 값들이 항상 바뀜
         self.transforms = transforms.Compose([
             transforms.ToTensor()
         ])

@@ -10,185 +10,30 @@ import random
 import torch.backends.cudnn as cudnn
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
+import yaml
+from loss import *
+from utils import *
+from model import *
 
-class EarlyStopping:
-    def __init__(self, patience=7, verbose=False, path='checkpoint.pt'):
-        self.patience = patience
-        self.verbose = verbose
-        self.counter = 0
-        self.best_score = None
-        self.early_stop = False
-        self.val_loss_min = float('inf')
-        self.path = path
+with open('CL_concept_classifier.yaml', 'r') as f:
+    config = yaml.loac(f, Loader=yaml.FullLoader)
 
-    def __call__(self, val_loss, model):
-        score = -val_loss
-
-        if self.best_score is None:
-            self.best_score = score
-            self.save_checkpoint(val_loss, model)
-        elif score < self.best_score:
-            self.counter += 1
-            if self.verbose:
-                print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
-            if self.counter >= self.patience:
-                self.early_stop = True
-        else:
-            self.best_score = score
-            self.save_checkpoint(val_loss, model)
-            self.counter = 0
-
-    def save_checkpoint(self, val_loss, model):
-        if self.verbose:
-            print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}). Saving model ...')
-        torch.save(model.state_dict(), self.path)
-        self.val_loss_min = val_loss
-
-#여러 라이브러리의 난수 생성기의 시드를 동일한 값으로 설정하는 함수
-def seed_fix(seed):
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    np.random.seed(seed)
-    cudnn.benchmark = False
-    cudnn.deterministic = True
-    random.seed(seed)
-
-def set_wandb(target_name, mode, seed, optimizer, dataset='ARC', entity='gyojoongu'):
-    run = wandb.init(project=f'{dataset}_{target_name}_{mode}', entity=entity)
-    if mode == 'train':
-        config = {
-            'learning_rate': lr,
-            'epochs': epochs,
-            'batch_size': batch_size,
-            'optimizer': optimizer
-        }
-        wandb.config.update(config)
-        wandb.run.name = f'{model_name}_o{optimizer}_l{lr}_b{batch_size}_e{epochs}_s{seed}'
-    wandb.run.save()
-    return run
-
-#VAE structure
-class vae_Linear_origin(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-        self.embedding = nn.Embedding(11, 512)      #왜 11인지
-
-        self.encoder = nn.Sequential(
-            nn.Linear(512, 256),
-            nn.ReLU(),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-        )
-
-        self.decoder = nn.Sequential(
-            nn.Linear(128, 256),
-            nn.ReLU(),
-            nn.Linear(256, 512),
-            nn.ReLU(),
-        )
-
-        self.mu_layer = nn.Linear(128, 128)
-        self.sigma_layer = nn.Linear(128, 128)
-
-        self.proj = nn.Linear(512, 11)
-
-    def forward(self, x):
-        if len(x.shape) > 3:
-            batch_size = x.shape[0]
-            embed_x = self.embedding(x.reshape(batch_size, 900).to(torch.long))
-        else:
-            embed_x = self.embedding(x.reshape(1, 900).to(torch.long))
-        feature_map = self.encoder(embed_x)
-        mu = self.mu_layer(feature_map)
-        sigma = self.sigma_layer(feature_map)
-        std = torch.exp(0.5 * sigma)
-        eps = torch.randn_like(std)
-        latent_vector = mu + std * eps
-        output = self.decoder(latent_vector)
-        output = self.proj(output).reshape(-1,30,30,11).permute(0,3,1,2)
-
-        return output
-
-class new_idea_vae(nn.Module):
-    def __init__(self, model_file):
-        super().__init__()
-
-        self.autoencoder = vae_Linear_origin()
-        self.autoencoder.load_state_dict(torch.load(model_file))
-        self.auto_encoder_freeze()
-
-        self.first_layer_parameter_size = 128
-        self.last_parameter_size = 128
-
-        self.fusion_layer1 = nn.Linear(128*900, self.first_layer_parameter_size)
-        self.fusion_layer2 = nn.Linear(self.first_layer_parameter_size, self.last_parameter_size)
-
-        self.relu = nn.ReLU()
-        self.leaky_relu = nn.LeakyReLU()
-
-        self.norm_layer1 = nn.BatchNorm1d(self.first_layer_parameter_size)
-        self.norm_layer2 = nn.BatchNorm1d(self.last_parameter_size)
-
-    def auto_encoder_freeze(self):
-        for param in self.autoencoder.parameters():
-            param.requires_grad = False
-
-    def forward(self, input_x, output_x):
-        batch_size = input_x.shape[0]
-        if len(input_x.shape) > 3:
-            embed_input = self.autoencoder.embedding(input_x.reshape(batch_size, 900).to(torch.long))
-            embed_output = self.autoencoder.embedding(output_x.reshape(batch_size, 900).to(torch.long))
-        else:
-            embed_input = self.autoencoder.embedding(input_x.reshape(-1, 900).to(torch.long))
-            embed_output = self.autoencoder.embedding(output_x.reshape(-1, 900).to(torch.long))
-        input_feature = self.autoencoder.encoder(embed_input)
-        output_feature = self.autoencoder.encoder(embed_output)
-
-        # Using difference of the latent vectors
-        diff_feature = input_feature - output_feature
-        concat_feature = diff_feature.reshape(batch_size, -1)
-
-        fusion_feature = self.fusion_layer1(concat_feature)
-        fusion_feature = self.norm_layer1(fusion_feature)
-        fusion_feature = self.leaky_relu(fusion_feature) 
-
-        output = self.fusion_layer2(fusion_feature)
-        output = self.norm_layer2(output)
-        output = self.leaky_relu(output)
-
-        return fusion_feature
-
-
-def label_making(task):
-    task = task.tolist()
-    label_index_list = []
-    label_list = []
-    for i in range(len(task)):
-        if i == 0 or task[i] not in label_list:
-            label_index_list.append(task[i])
-
-
-    label_list = [label_index_list.index(x) for x in task]
-
-
-    return torch.tensor(label_list, dtype=torch.long)
-
-entity = 'whatchang'
-permute_mode = None
-train_batch_size = 128
-valid_batch_size = 16
-lr = 7e-3
+entity = config['entity']
+permute_mode = config['permute_mode']
+train_batch_size = config['train_batch_size']
+valid_batch_size = config['valid_batch_size']
+lr = config['lr']
 batch_size = train_batch_size
-epochs = 200
-seed = 777
-model_name = 'vae'
-mode = 'task'
-temperature = 1
-use_wandb = False
-use_scheduler = True
-scheduler_name = 'LROn'
+epochs = config['epochs']
+seed = config['seed']
+model_name = config['model_name']
+mode = config['mode']
+temperature = config['temperature']
+use_wandb = config['use_wandb']
+use_scheduler = config['use_scheduler']
+scheduler_name = config['scheduler_name']
+patience = config['patience']
+seed_fix(seed)
 early_stopping = EarlyStopping(patience=40, verbose=True, path='best_concept_classifier_model.pt')  # 초기화
 #lr_lambda = 0.97
 
@@ -212,7 +57,6 @@ valid_loader = DataLoader(valid_dataset, batch_size=valid_batch_size, drop_last=
 criteria = nn.CrossEntropyLoss()
 
 best_acc = 0
-seed_fix(seed)
 
 knn_model = KNeighborsClassifier(n_neighbors=5)
 
@@ -258,7 +102,6 @@ accuracy = knn_model.score(valid_embeddings, valid_labels)
 print(f'Before KNN Accuracy: {accuracy * 100:.2f}%')
 
 
-new_model = new_idea_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to('cuda') 
 new_model.load_state_dict(torch.load('result\CL_soft_cl_0.2418329417705536.pt'))
 for param in new_model.parameters():
     param.requires_grad = False
