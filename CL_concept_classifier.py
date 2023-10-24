@@ -40,10 +40,10 @@ early_stopping = EarlyStopping(patience=40, verbose=True, path='best_concept_cla
 #lr_lambda = 0.97
 
 new_model = new_idea_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to('cuda')         #Cross_vae_Linear_origin_b64_lr1e-3_4.pt이게 뭔지 확인!
-# train_dataset_name = 'data/train_new_idea.json'
-# valid_dataset_name = 'data/valid_new_idea.json'
-train_dataset_name = 'data/train_concept.json'
-valid_dataset_name = 'data/test_concept.json'
+train_dataset_name = 'data/train_new_idea.json'
+valid_dataset_name = 'data/valid_new_idea.json'
+# train_dataset_name = 'data/train_concept.json'
+# valid_dataset_name = 'data/test_concept.json'
 # train_dataset_name = 'data/train_new_idea_task_sample2_.json'
 # valid_dataset_name = 'data/valid_new_idea_task_sample2_.json'
 train_dataset = ARCDataset(train_dataset_name, mode=mode, permute_mode=permute_mode)
@@ -110,9 +110,9 @@ print(f'Before KNN Accuracy: {accuracy * 100:.2f}%')
 new_model.load_state_dict(torch.load(f'{pre_trained}'))
 for param in new_model.parameters():
     param.requires_grad = False
-new_model.classifier = nn.Linear(128, 16).to('cuda')
-optimizer = Lion(new_model.parameters(), lr=lr, weight_decay=1e-2)
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5, verbose=True)
+# new_model.classifier = nn.Linear(128, 400).to('cuda')
+# optimizer = Lion(new_model.parameters(), lr=lr, weight_decay=1e-2)
+# scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5, verbose=True)
 
 # KNN 모델 초기화
 knn_model = KNeighborsClassifier(n_neighbors=5)
@@ -157,6 +157,12 @@ valid_labels = np.array(valid_labels)
 # KNN의 정확도를 계산합니다.
 accuracy = knn_model.score(valid_embeddings, valid_labels)
 print(f'After KNN Accuracy: {accuracy * 100:.2f}%')
+
+
+new_model.classifier = nn.Linear(128, 400).to('cuda')
+optimizer = Lion(new_model.parameters(), lr=lr, weight_decay=1e-2)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5, verbose=True)
+
 
 for epoch in tqdm(range(epochs)):
     train_total_loss = []
@@ -239,5 +245,5 @@ for epoch in tqdm(range(epochs)):
     # if use_scheduler:
     #     scheduler.step(avg_valid_loss)
 
-new_model.load_state_dict(torch.load('best_concept_classifier_model.pt'))
-torch.save(new_model.state_dict(), f'result/concept_classifier_number_{best_acc:.2f}.pt')
+# new_model.load_state_dict(torch.load('best_concept_classifier_model.pt'))
+# torch.save(new_model.state_dict(), f'result/concept_classifier_number_{best_acc:.2f}.pt')

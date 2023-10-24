@@ -36,10 +36,12 @@ use_scheduler = config['use_scheduler']
 scheduler_name = config['scheduler_name']
 patience = config['patience']
 loss_mode = config['loss_mode']
+seed_fix(seed)
 
 def objective(trial):
     new_model = new_idea_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to('cuda') 
     best_acc = 0
+    best_loss = 9999
     train_batch_size = 128
     valid_batch_size = 16
     epochs = 200
@@ -115,9 +117,13 @@ def objective(trial):
 
         print(f'valid loss: {avg_valid_loss}')
 
+        if best_loss > avg_valid_loss:
+            best_loss = avg_valid_loss
+
         if use_wandb:
             wandb.log({
                 "valid_loss": avg_valid_loss,
+                "best_loss": best_loss,
             }, step=epoch)
     
     wandb.finish()

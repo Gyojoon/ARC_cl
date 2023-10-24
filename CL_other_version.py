@@ -176,6 +176,9 @@ for epoch in tqdm(range(epochs)):
 
     print(f'valid loss: {avg_valid_loss}')
 
+    if best_loss < avg_valid_loss:
+            best_loss = avg_valid_loss
+
     if use_wandb:
         wandb.log({
             "valid_loss": avg_valid_loss,
@@ -185,7 +188,7 @@ for epoch in tqdm(range(epochs)):
         scheduler.step(avg_valid_loss)
 
 new_model.load_state_dict(torch.load(f'CL_{loss_mode}_best_model.pt'))
-torch.save(new_model.state_dict(), f'result/CL_{loss_mode}_{avg_valid_loss}.pt')
+torch.save(new_model.state_dict(), f'result/CL_{loss_mode}_{best_loss}.pt')
 print(f'{loss_mode}: {avg_valid_loss}')
 
 # torch.save(new_model.state_dict(), f'result/number1.pt')
