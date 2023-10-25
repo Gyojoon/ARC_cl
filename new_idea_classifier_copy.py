@@ -196,12 +196,12 @@ new_model = new_idea_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to(
 new_model.load_state_dict(torch.load('result/number1_0.14684846997261047.pt'))
 for param in new_model.parameters():
     param.requires_grad = False
-# new_model.classifier = nn.Linear(128, 16).to('cuda')
-new_model.classifier = nn.Linear(128, 400).to('cuda')
-# train_dataset_name = 'data/train_concept.json'
-# valid_dataset_name = 'data/test_concept.json'
-train_dataset_name = 'data/train_new_idea.json'
-valid_dataset_name = 'data/valid_new_idea.json'
+new_model.classifier = nn.Linear(128, 16).to('cuda')
+# new_model.classifier = nn.Linear(128, 400).to('cuda')
+train_dataset_name = 'data/train_concept.json'
+valid_dataset_name = 'data/test_concept.json'
+# train_dataset_name = 'data/train_new_idea.json'
+# valid_dataset_name = 'data/valid_new_idea.json'
 # train_dataset_name = 'data/train_new_idea_task_sample2_.json'
 # valid_dataset_name = 'data/valid_new_idea_task_sample2_.json'
 train_dataset = ARCDataset(train_dataset_name, mode=mode, permute_mode=permute_mode)

@@ -13,4 +13,6 @@ use_wandb: False
 use_scheduler: False
 scheduler_name: 'LROn'
 patience: 20
+loss_mode: 'nx_xent_loss'
+dataset_mode: 'concept'
 pre_trained: result\CL_our_loss_0.3139604926109314.pt # result/CL_nx_xent_loss_0.1956702619791031.pt  result/CL_our_loss_0.4163462817668915.pt

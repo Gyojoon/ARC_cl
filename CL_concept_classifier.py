@@ -35,8 +35,10 @@ use_scheduler = config['use_scheduler']
 scheduler_name = config['scheduler_name']
 patience = config['patience']
 pre_trained = config['pre_trained']
+loss_mode = config['loss_mode']
+dataset_mode = config['dataset_mode']
 seed_fix(seed)
-early_stopping = EarlyStopping(patience=patience, verbose=True, path='best_concept_classifier_model.pt')  # 초기화
+early_stopping = EarlyStopping(patience=patience, verbose=True, path='best_{dataset_mode}_classifier_{loss_mode}.pt')  # 초기화
 #lr_lambda = 0.97
 
 new_model = new_idea_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to('cuda')         #Cross_vae_Linear_origin_b64_lr1e-3_4.pt이게 뭔지 확인!
@@ -248,6 +250,6 @@ for epoch in tqdm(range(epochs)):
     # if use_scheduler:
     #     scheduler.step(avg_valid_loss)
 
-# new_model.load_state_dict(torch.load('best_concept_classifier_model.pt'))
-# torch.save(new_model.state_dict(), f'result/concept_classifier_number_{best_acc:.2f}.pt')
+new_model.load_state_dict(torch.load('best_{dataset_mode}_classifier_{loss_mode}.pt'))
+torch.save(new_model.state_dict(), f'result/{dataset_mode}_classifier_{loss_mode}_{best_acc:.2f}.pt')
 print(best_acc)
