@@ -131,6 +131,8 @@ class new_idea_vae(nn.Module):
         self.norm_layer1 = nn.BatchNorm1d(self.first_layer_parameter_size)
         self.norm_layer2 = nn.BatchNorm1d(self.last_parameter_size)
 
+        self.classifier = nn.Linear(self.last_parameter_size, 400)
+
     def auto_encoder_freeze(self):
         for param in self.autoencoder.parameters():
             param.requires_grad = False
@@ -158,6 +160,8 @@ class new_idea_vae(nn.Module):
         output = self.norm_layer2(output)
         output = self.leaky_relu(output)
 
+        output = self.classifier(output)
+
         return output
 
 
@@ -175,10 +179,10 @@ def label_making(task):
 
     return torch.tensor(label_list, dtype=torch.long)
 
-permute_mode = False
+permute_mode = None
 train_batch_size = 128
 valid_batch_size = 16
-lr = 1e-4
+lr = 1e-3
 batch_size = train_batch_size
 epochs = 1000
 seed = 777
@@ -186,28 +190,34 @@ model_name = 'vae'
 mode = 'task'
 temperature = 1
 use_wandb = False
-use_scheduler = False
+use_scheduler = True
 scheduler_name = 'LROn'
-seed_fix(seed)
-early_stopping = EarlyStopping(patience=20, verbose=True, path='best_base_classifier_model.pt')  # 초기화
+early_stopping = EarlyStopping(patience=200, verbose=True, path='best_base_classifier_model.pt')  # 초기화
 #lr_lambda = 0.97
 
 new_model = new_idea_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to('cuda')         #Cross_vae_Linear_origin_b64_lr1e-3_4.pt이게 뭔지 확인!
-# train_dataset_name = 'data/train_concept.json'
-# valid_dataset_name = 'data/test_concept.json'
+#train_dataset_name = 'data/train_data.json'
+#valid_dataset_name = 'data/valid_data.json'
 train_dataset_name = 'data/train_new_idea.json'
 valid_dataset_name = 'data/valid_new_idea.json'
+# train_dataset_name = 'data/train_new_idea_task_sample2_.json'
+# valid_dataset_name = 'data/valid_new_idea_task_sample2_.json'
 train_dataset = ARCDataset(train_dataset_name, mode=mode, permute_mode=permute_mode)
 valid_dataset = ARC_ValidDataset(valid_dataset_name, mode=mode)
 kind_of_dataset = 'Concept_task_sample2' if 'concept' in train_dataset_name else 'ARC_task_sample2' if 'sample2' in train_dataset_name else 'ARC'
 train_loader = DataLoader(train_dataset, batch_size=train_batch_size, drop_last=True, shuffle=True)
 valid_loader = DataLoader(valid_dataset, batch_size=valid_batch_size, drop_last=True, shuffle=False)
 
+#optimizer = optim.AdamW(new_model.parameters(), lr=lr)
 optimizer = Lion(new_model.parameters(), lr=lr, weight_decay=1e-2)
+#optimizer = optim.Adam(new_model.parameters(), lr=lr, weight_decay=5e-4)
+#scheduler = optim.lr_scheduler.LambdaLR(optimizer=optimizer, lr_lambda=lambda epoch: lr_lambda ** epoch)
+# scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.5, verbose=True)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5, verbose=True)
 criteria = nn.CrossEntropyLoss()
 
 best_acc = 0
+seed_fix(seed)
 
 if use_wandb:
     set_wandb('new_idea', 'train', seed, 'Lion', kind_of_dataset)
@@ -264,8 +274,6 @@ valid_labels = np.array(valid_labels)
 accuracy = knn_model.score(valid_embeddings, valid_labels)
 print(f'KNN Accuracy: {accuracy * 100:.2f}%')
 
-new_model.classifier = nn.Linear(128, 400).to('cuda')  
-
 for epoch in tqdm(range(epochs)):
     train_total_loss = []
     train_total_acc = 0
@@ -281,7 +289,6 @@ for epoch in tqdm(range(epochs)):
         task = task.to(torch.long).to('cuda') # TODO 고치기
 
         output = new_model(input, output)
-        output = new_model.classifier(output)
 
         loss = criteria(output, task)
 
@@ -307,7 +314,7 @@ for epoch in tqdm(range(epochs)):
         task = task.to(torch.long).to('cuda')  # Moved the task tensor to the GPU as well
 
         output = new_model(input, output)
-        output = new_model.classifier(output)
+        # output = new_model.classifier(output)
 
         loss = criteria(output, task)
 
