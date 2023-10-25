@@ -2,14 +2,14 @@ entity: 'whatchang'
 permute_mode: False
 train_batch_size: 128
 valid_batch_size: 16
-lr: 1e-3
+lr: 1e-4
 batch_size: train_batch_size
 epochs: 1000
 seed: 777
 model_name: 'vae'
 mode: 'base'
 temperature: 1
-use_wandb: True
-use_scheduler: True
+use_wandb: False
+use_scheduler: False
 scheduler_name: 'LROn'
 patience: 20

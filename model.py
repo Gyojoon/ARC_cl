@@ -91,3 +91,173 @@ class new_idea_vae(nn.Module):
         output = self.leaky_relu(output)
 
         return output
+
+
+class new_idea2_vae(nn.Module):
+    def __init__(self, model_file):
+        super().__init__()
+
+        self.autoencoder = vae_Linear_origin()
+        self.autoencoder.load_state_dict(torch.load(model_file))
+        self.auto_encoder_freeze()
+
+        self.first_layer_parameter_size = 128
+        self.last_parameter_size = 128
+
+        self.fusion_layer1 = nn.Linear(3*128*900, self.first_layer_parameter_size)
+        self.fusion_layer2 = nn.Linear(self.first_layer_parameter_size, self.last_parameter_size)
+
+        self.relu = nn.ReLU()
+        self.leaky_relu = nn.LeakyReLU()
+
+        self.norm_layer1 = nn.BatchNorm1d(self.first_layer_parameter_size)
+        self.norm_layer2 = nn.BatchNorm1d(self.last_parameter_size)
+
+    def auto_encoder_freeze(self):
+        for param in self.autoencoder.parameters():
+            param.requires_grad = False
+
+    def forward(self, input_x, output_x):
+        batch_size = input_x.shape[0]
+        if len(input_x.shape) > 3:
+            embed_input = self.autoencoder.embedding(input_x.reshape(batch_size, 900).to(torch.long))
+            embed_output = self.autoencoder.embedding(output_x.reshape(batch_size, 900).to(torch.long))
+        else:
+            embed_input = self.autoencoder.embedding(input_x.reshape(-1, 900).to(torch.long))
+            embed_output = self.autoencoder.embedding(output_x.reshape(-1, 900).to(torch.long))
+        input_feature = self.autoencoder.encoder(embed_input)
+        output_feature = self.autoencoder.encoder(embed_output)
+
+        # Using difference of the latent vectors
+        diff_feature = input_feature - output_feature
+        diff_feature = diff_feature#.reshape(batch_size, -1)
+        concat_feature = torch.cat((input_feature, output_feature, diff_feature), dim=-1).reshape(batch_size, -1)
+
+        fusion_feature = self.fusion_layer1(concat_feature)
+        fusion_feature = self.norm_layer1(fusion_feature)
+        fusion_feature = self.leaky_relu(fusion_feature) 
+
+        output = self.fusion_layer2(fusion_feature)
+        output = self.norm_layer2(output)
+        output = self.leaky_relu(output)
+
+        return output
+    
+class new_idea3_vae(nn.Module):
+    def __init__(self, model_file):
+        super().__init__()
+
+        self.autoencoder = vae_Linear_origin()
+        self.autoencoder.load_state_dict(torch.load(model_file))
+        self.auto_encoder_freeze()
+
+        self.first_layer_parameter_size = 128
+        self.last_parameter_size = 128
+
+        self.fusion_layer1 = nn.Linear(1*128*900, self.first_layer_parameter_size)
+        self.fusion_layer2 = nn.Linear(self.first_layer_parameter_size, self.last_parameter_size)
+
+        self.relu = nn.ReLU()
+        self.leaky_relu = nn.LeakyReLU()
+
+        self.norm_layer1 = nn.BatchNorm1d(self.first_layer_parameter_size)
+        self.norm_layer2 = nn.BatchNorm1d(self.last_parameter_size)
+
+    def auto_encoder_freeze(self):
+        for param in self.autoencoder.parameters():
+            param.requires_grad = False
+
+    def forward(self, input_x, output_x):
+        batch_size = input_x.shape[0]
+        if len(input_x.shape) > 3:
+            embed_input = self.autoencoder.embedding(input_x.reshape(batch_size, 900).to(torch.long))
+            embed_output = self.autoencoder.embedding(output_x.reshape(batch_size, 900).to(torch.long))
+        else:
+            embed_input = self.autoencoder.embedding(input_x.reshape(-1, 900).to(torch.long))
+            embed_output = self.autoencoder.embedding(output_x.reshape(-1, 900).to(torch.long))
+        input_feature = self.autoencoder.encoder(embed_input)
+        output_feature = self.autoencoder.encoder(embed_output)
+
+        input_mu = self.autoencoder.mu_layer(input_feature)
+        input_sigma = self.autoencoder.sigma_layer(input_feature)
+        input_std = torch.exp(0.5 * input_sigma)
+        input_latent_vector = input_mu + input_std 
+
+        output_mu = self.autoencoder.mu_layer(output_feature)
+        output_sigma = self.autoencoder.sigma_layer(output_feature)
+        output_std = torch.exp(0.5 * output_sigma)
+        output_latent_vector = output_mu + output_std 
+
+        # Using difference of the latent vectors
+        diff_feature = input_latent_vector - output_latent_vector
+        concat_feature = diff_feature.reshape(batch_size, -1)
+
+        fusion_feature = self.fusion_layer1(concat_feature)
+        fusion_feature = self.norm_layer1(fusion_feature)
+        fusion_feature = self.leaky_relu(fusion_feature) 
+
+        output = self.fusion_layer2(fusion_feature)
+        output = self.norm_layer2(output)
+        output = self.leaky_relu(output)
+
+        return output
+    
+class new_idea4_vae(nn.Module):
+    def __init__(self, model_file):
+        super().__init__()
+
+        self.autoencoder = vae_Linear_origin()
+        self.autoencoder.load_state_dict(torch.load(model_file))
+        self.auto_encoder_freeze()
+
+        self.first_layer_parameter_size = 128
+        self.last_parameter_size = 128
+
+        self.fusion_layer1 = nn.Linear(3*128*900, self.first_layer_parameter_size)
+        self.fusion_layer2 = nn.Linear(self.first_layer_parameter_size, self.last_parameter_size)
+
+        self.relu = nn.ReLU()
+        self.leaky_relu = nn.LeakyReLU()
+
+        self.norm_layer1 = nn.BatchNorm1d(self.first_layer_parameter_size)
+        self.norm_layer2 = nn.BatchNorm1d(self.last_parameter_size)
+
+    def auto_encoder_freeze(self):
+        for param in self.autoencoder.parameters():
+            param.requires_grad = False
+
+    def forward(self, input_x, output_x):
+        batch_size = input_x.shape[0]
+        if len(input_x.shape) > 3:
+            embed_input = self.autoencoder.embedding(input_x.reshape(batch_size, 900).to(torch.long))
+            embed_output = self.autoencoder.embedding(output_x.reshape(batch_size, 900).to(torch.long))
+        else:
+            embed_input = self.autoencoder.embedding(input_x.reshape(-1, 900).to(torch.long))
+            embed_output = self.autoencoder.embedding(output_x.reshape(-1, 900).to(torch.long))
+        input_feature = self.autoencoder.encoder(embed_input)
+        output_feature = self.autoencoder.encoder(embed_output)
+
+        input_mu = self.autoencoder.mu_layer(input_feature)
+        input_sigma = self.autoencoder.sigma_layer(input_feature)
+        input_std = torch.exp(0.5 * input_sigma)
+        input_latent_vector = input_mu + input_std 
+
+        output_mu = self.autoencoder.mu_layer(output_feature)
+        output_sigma = self.autoencoder.sigma_layer(output_feature)
+        output_std = torch.exp(0.5 * output_sigma)
+        output_latent_vector = output_mu + output_std 
+
+        # Using difference of the latent vectors
+        diff_feature = input_feature - output_feature
+        diff_feature = diff_feature#.reshape(batch_size, -1)
+        concat_feature = torch.cat((input_feature, output_feature, diff_feature), dim=-1).reshape(batch_size, -1)
+
+        fusion_feature = self.fusion_layer1(concat_feature)
+        fusion_feature = self.norm_layer1(fusion_feature)
+        fusion_feature = self.leaky_relu(fusion_feature) 
+
+        output = self.fusion_layer2(fusion_feature)
+        output = self.norm_layer2(output)
+        output = self.leaky_relu(output)
+
+        return output

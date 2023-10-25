@@ -39,8 +39,9 @@ early_stopping = EarlyStopping(patience=patience, verbose=True, path=f'CL_{loss_
 seed_fix(seed)
 
 new_model = new_idea_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to('cuda')         #Cross_vae_Linear_origin_b64_lr1e-3_4.pt이게 뭔지 확인!
-#train_dataset_name = 'data/train_data.json'
-#valid_dataset_name = 'data/valid_data.json'
+# new_model = new_idea2_vae('./result/Cross_vae_Linear_origin_b64_lr1e-3_4.pt').to('cuda') 
+# train_dataset_name = 'data/train_concept.json'
+# valid_dataset_name = 'data/test_concept.json'
 train_dataset_name = 'data/train_new_idea.json'
 valid_dataset_name = 'data/valid_new_idea.json'
 # train_dataset_name = 'data/train_new_idea_task_sample2_.json'
@@ -57,6 +58,7 @@ optimizer = Lion(new_model.parameters(), lr=lr, weight_decay=1e-2)
 #scheduler = optim.lr_scheduler.LambdaLR(optimizer=optimizer, lr_lambda=lambda epoch: lr_lambda ** epoch)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.5, verbose=True)
 #scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5, verbose=True)
+best_loss = 9999
 
 if use_wandb:
     set_wandb(epochs, 'train', seed, 'Lion', train_batch_size, valid_batch_size, lr, temperature, kind_of_dataset, entity)
@@ -176,7 +178,7 @@ for epoch in tqdm(range(epochs)):
 
     print(f'valid loss: {avg_valid_loss}')
 
-    if best_loss < avg_valid_loss:
+    if best_loss > avg_valid_loss:
             best_loss = avg_valid_loss
 
     if use_wandb:
@@ -186,9 +188,10 @@ for epoch in tqdm(range(epochs)):
 
     if use_scheduler:
         scheduler.step(avg_valid_loss)
+    print(best_loss)
 
 new_model.load_state_dict(torch.load(f'CL_{loss_mode}_best_model.pt'))
 torch.save(new_model.state_dict(), f'result/CL_{loss_mode}_{best_loss}.pt')
-print(f'{loss_mode}: {avg_valid_loss}')
+print(f'{loss_mode}: {best_loss}')
 
 # torch.save(new_model.state_dict(), f'result/number1.pt')
